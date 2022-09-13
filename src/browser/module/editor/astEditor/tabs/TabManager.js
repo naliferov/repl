@@ -37,14 +37,7 @@ export default class TabManager {
             this.activeTab = openedTab;
         } else {
 
-            let editor;
-
-            const subNodes = node.get('nodes');
-            if (subNodes) {
-                if (subNodes[0].name === 'type: js') editor = new JSEditor(node);
-            }
-
-            if (!editor) editor = new AstEditor(node, this.astSerializer, new AstNodeEditor);
+            let editor = new JSEditor(node);
 
             const newTab = new Tab(node.get('name'), node, editor);
             newTab.onClick((e) => this.focusTab(node));
@@ -59,9 +52,8 @@ export default class TabManager {
 
             this.activeTab = newTab;
 
-            console.log(this.activeTab.getEditor().getV());
-
             e('>', [this.activeTab.getEditor().getV(), this.tabsContentBlock]);
+            editor.applyAceEditor()
         }
 
         this.localState.openTab(this.activeTab.getContextNodeId());

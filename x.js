@@ -1,5 +1,3 @@
-import NetworkNodesModel from "./src/io/db/model/NetworkNodesModel.js";
-
 const main = async () => {
     if (typeof window !== 'undefined') { await browser(); return; }
 
@@ -19,31 +17,15 @@ const main = async () => {
 
     const x = (a1, a2, a3) => {
         if (a1 === 'logger') return logger;
-        if (a1 === 'stateDir') return path.resolve(cwd + '/../state');
+        if (a1 === 'stateDir') return path.resolve(cwd + '/../stateLoop');
         else if (a1 === 'fs') return fs;
         else if (a1 === 'conf') return conf;
     }
 
-    if (cliArgs.cmd === 'runner') {
-        await runRunnerService(cliArgs, {appDir: cwd, ctxDir: cwd, logger, x});
-        return;
-    }
-    if (cliArgs.cmd === 'addNetworkNode') {
-        await mongoManager.connect();
-        const networkNodes = new NetworkNodesModel(mongoManager);
-        await networkNodes.insertOne({ip: '127.0.0.1', 'port': 8090});
-        await logger.info('Inserted.');
-        return;
-    }
+    if (cliArgs.cmd === 'runner') { await runRunnerService(cliArgs, {appDir: cwd, ctxDir: cwd, logger, x}); return; }
     await runMainService(cliArgs, {appDir: cwd, ctxDir: cwd, logger, mongoManager, x});
 }
 
-const updateService = async (cliArgs, deps) => {
-    //listen for hook, then git pull
-    //npm install
-    //run new instance
-    //stop old instance
-}
 const runMainService = async (cliArgs, deps) => {
     const HttpMsgHandler = (await import("./src/io/http/HttpMsgHandler.js")).default;
     const express = (await import("express")).default;
@@ -112,7 +94,6 @@ const runRunnerService = async (cliArgs, deps) => {
 
     const log = async (rq, rs, nx) => { logger.info(rq.method + ' ' + rq.path); nx(); }
     const api = async (rq, rs, nx) => {
-        if (rq.path === 'conf/conf.json' || rq.path === '/conf/conf.json') { rs.status(403).end(); return; }
         if (rq.path === '/start') {
             const {js} = rq.body; if (!js) { rs.send({err: 'js is empty.'}); return; }
             const fName = uuid() + '.js';

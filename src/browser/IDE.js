@@ -15,6 +15,7 @@ import CallConditionPart from "./module/editor/astEditor/nodes/conditionAndBody/
 import AstEditor from "./module/editor/astEditor/control/AstEditor.js";
 import Btn from "../type/Btn.js";
 import ProcsList from "./module/procsList/ProcsList.js";
+import ConsolePanel from "./module/editor/astEditor/ConsolePanel.js";
 
 export default class IDE {
 
@@ -24,6 +25,9 @@ export default class IDE {
         const input = new Input(window);
         const http = new HttpClient;
 
+        //later move this to loop some king of loop manager
+        e['loopServiceUrl'] = () => 'http://localhost:8099';
+
         const pageIDE = new V({class: ['pageIDE']});
         e('>', [pageIDE, app]);
 
@@ -31,6 +35,9 @@ export default class IDE {
 
         const logPanel = new LogPanel(input, localState);
         e('>', [logPanel.getV(), pageIDE]);
+
+        const consolePanel = new ConsolePanel(input, localState);
+        e('>', [consolePanel.getV(), pageIDE]);
 
         const sideBar = new V({class: 'sidebar'});
         e('>', [sideBar, pageIDE]);
@@ -59,12 +66,12 @@ export default class IDE {
         e('>', [next, btnsBar]);
         next.on('click', () => e('ASTNextVersion'));
 
-        const run = new Btn('start');
-        e('>', [run, btnsBar]);
-        run.on('click', () => e('procStart'));
-
-        const deploy = new Btn('deploy');
-        e('>', [deploy, btnsBar]);
+        // const run = new Btn('start');
+        // e('>', [run, btnsBar]);
+        // run.on('click', () => e('procStart'));
+        //
+        // const deploy = new Btn('deploy');
+        // e('>', [deploy, btnsBar]);
 
         let procsListIsActive = false;
         const procsList = new ProcsList(this.popup, nodes);
@@ -78,6 +85,14 @@ export default class IDE {
         const logout = new Btn('logout');
         e('>', [logout, btnsBar]);
         //logout.on('click', () => e('ASTNextVersion'));
+
+        //consolePanel.switchVisibility();
+
+        //const consoleBtn = new Btn('console');
+        //e('>', [logout, btnsBar]);
+        //logout.on('click', () => e('ASTNextVersion'));
+
+
 
         const tabManager = new TabManager(nodes, localState);
         e('>', [tabManager.getV(), mainContainer]);
@@ -216,6 +231,9 @@ export default class IDE {
 
         const node = window.nodesPool.get(activeTabId);
         if (node) tabManager.focusTab(node);
+
+        //if loop is not loaded, load loop
+        //todo console for trigger loop events and functions
     }
 
     async showPopup() {

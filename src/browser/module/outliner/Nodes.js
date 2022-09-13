@@ -10,7 +10,8 @@ export default class Nodes {
     getV() { return this.v; }
 
     async init() {
-        const nodes = (await (new HttpClient).get('/nodes')).data;
+
+        const nodes = (await (new HttpClient).get(e('loopServiceUrl') + '/getState')).data;
 
         const rootNode = new Node;
         rootNode.set('nodes', nodes);

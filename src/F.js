@@ -1,4 +1,3 @@
-//u1({}, ['s', ''], ['f', ''])
 const crypto = typeof process !== 'undefined' ? (await import('crypto')).default : null;
 
 export const uuid = () => {
