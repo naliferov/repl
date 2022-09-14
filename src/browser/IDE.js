@@ -86,7 +86,7 @@ export default class IDE {
         e('>', [logout, btnsBar]);
         //logout.on('click', () => e('ASTNextVersion'));
 
-        //consolePanel.switchVisibility();
+        consolePanel.switchVisibility();
 
         //const consoleBtn = new Btn('console');
         //e('>', [logout, btnsBar]);

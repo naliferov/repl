@@ -1,4 +1,5 @@
 import V from "../../../../type/V.js";
+import HttpClient from "../../../../io/http/HttpClient.js";
 
 export default class ConsolePanel {
 
@@ -15,6 +16,15 @@ export default class ConsolePanel {
         e('>', [this.automaticScroll, this.header]);
         e('>', [new V({txt: 'automatic scroll'}), this.header]);
 
+        const inputJS = new V({tagName: 'input'});
+        e('>', [inputJS, this.v]);
+        inputJS.on('keyup', (e) => {
+            if (e.key !== 'Enter') return;
+            const js = inputJS.getVal();
+            if (js.length < 3) return;
+
+            (new HttpClient).post(window.e('loopServiceUrl') + '/console', {js});
+        });
 
         this.content = new V({class: 'processLogContent'});
         e('>', [this.content, this.v]);

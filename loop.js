@@ -63,8 +63,9 @@ const runLoopService = async (cliArgs, deps) => {
 
         if (rq.path === '/getNodes') rs.send(y.__std__.nodes.versionData);
         else if (rq.path === '/console') {
-            if (!rq.body.js) { rs.send({err: 'js is empty'}); return; }
-            eval(rq.body); rs.send({});
+            if (typeof rq.body.js !== 'string') { rs.send({err: 'js is not string'}); return; }
+            const r = eval(rq.body.js);
+            rs.send(r ? {r} : {});
 
         } else if (rq.path === '/createNode') {
 
@@ -93,7 +94,7 @@ const runLoopService = async (cliArgs, deps) => {
             const nodeId = rq.body.nodeId
             if (!nodeId) { rs.send({err: 'nodeId is empty'}); return; }
             const nodeIndex = rq.body.nodeIndex;
-            if (typeof nodeIndex !== 'number') { rs.send({err: 'nodeIndex is empty or invalid'}); return; }
+            if (typeof nodeIndex !== 'number') { rs.send({err: 'nodeIndex is not number'}); return; }
 
             const parentNodeId = rq.body.parentNodeId;
             if (parentNodeId) {
