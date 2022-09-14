@@ -86,6 +86,7 @@ export default class V {
             y: sizes.y + scrollY,
         }
     }
+    getChildren() { return this.dom.children }
     getChildrenCount() { return this.dom.children.length }
     select() {
         this.dom.style.border = '2px solid black';

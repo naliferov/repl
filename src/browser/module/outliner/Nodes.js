@@ -11,13 +11,14 @@ export default class Nodes {
 
     async init() {
 
-        const nodes = (await (new HttpClient).get(e('loopServiceUrl') + '/getState')).data;
+        const nodes = (await (new HttpClient).get(e('loopServiceUrl') + '/getNodes')).data;
 
         const rootNode = new Node;
         rootNode.set('nodes', nodes);
 
         const outlinerRootNode = new OutlinerNode(rootNode);
         outlinerRootNode.removeSubNodesShift();
+        outlinerRootNode.markAsRootNode();
 
         this.outLinerRootNode = outlinerRootNode;
         e('>', [outlinerRootNode, this.getV()]);
@@ -149,6 +150,21 @@ export default class Nodes {
         e('>after', [newOutlinerNode.getV(), outlinerNode.getV()]);
         window.outlinerPool.set(newOutlinerNode.getDomId(), newOutlinerNode);
 
+        const parent = outlinerNode.getParent();
+
+        const rqParams = {node: newNode.getData()};
+        if (!parent.isRoot) rqParams.parentNodeId = parent.getContextNode().get('id');
+
+        const subNodes = parent.getNodesV().getChildren();
+        for (let i = 0; i < subNodes.length; i++) {
+            if (subNodes[i].id === newOutlinerNode.getDomId()) {
+                rqParams.nodeIndex = i;
+                break;
+            }
+        }
+
+        (new HttpClient).post(e('loopServiceUrl') + '/createNode', rqParams);
+
         setTimeout(() => newOutlinerNode.focus(), 100);
     }
 
@@ -160,6 +176,27 @@ export default class Nodes {
     }
 
     delete(outlinerNode) {
+
+        const rqParams = {
+            nodeId: outlinerNode.getContextNode().get('id'),
+        };
+
+        const parent = outlinerNode.getParent();
+        if (!parent.isRoot) rqParams.parentNodeId = parent.getContextNode().get('id');
+
+        const subNodes = parent.getNodesV().getChildren();
+
+        for (let i = 0; i < subNodes.length; i++) {
+            if (subNodes[i].id === outlinerNode.getDomId()) {
+                rqParams.nodeIndex = i;
+                break;
+            }
+        }
+
+        console.log(rqParams);
+
+        (new HttpClient).post(e('loopServiceUrl') + '/deleteNode', rqParams);
+
         window.nodesPool.delete(outlinerNode.getContextNode().get('id'));
         window.outlinerPool.delete(outlinerNode.getDomId());
         outlinerNode.getV().removeFromDom();

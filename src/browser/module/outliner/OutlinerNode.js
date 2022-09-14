@@ -41,14 +41,12 @@ export default class OutlinerNode {
              this.openClose.removeClass('disabled');
         }
     }
-
-    updateNameInContextNode() {
-        this.getContextNode().set('name', this.dataV.getTxt().trim());
-    }
-
-    getDomId() { return this.domId; }
-    isEmpty() { return !this.nodesV.getDOM().children.length; }
-    getParent() { return window.outlinerPool.get(this.v.parentDOM().parentNode.id); }
+    updateNameInContextNode() { this.getContextNode().set('name', this.dataV.getTxt().trim()) }
+    getDomId() { return this.domId }
+    isEmpty() { return !this.nodesV.getDOM().children.length }
+    isInRoot() { return this.getParent().isRoot }
+    markAsRootNode() { this.isRoot = true }
+    getParent() { return window.outlinerPool.get(this.v.parentDOM().parentNode.id) }
 
     next() {
         const next = this.v.getDOM().nextSibling;
