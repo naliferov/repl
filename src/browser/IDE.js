@@ -47,6 +47,10 @@ export default class IDE {
         const addNodeBtn = new V({class: ['btn'], txt: '+'});
         e('>', [addNodeBtn, sideBarBtnsBar]);
 
+        const logout = new Btn('logout');
+        e('>', [logout, sideBarBtnsBar]);
+        //logout.on('click', () => e('ASTNextVersion'));
+
         const nodes = new Nodes;
         await nodes.init();
         e('>', [nodes.getV(), sideBar]);
@@ -58,33 +62,24 @@ export default class IDE {
         const btnsBar = new V({class: 'btnsBar'});
         e('>', [btnsBar, mainContainer]);
 
-        const prev = new V({class: 'btn', txt: 'versionPrev'});
-        e('>', [prev, btnsBar]);
-        prev.on('click', () => e('ASTPrevVersion'));
 
-        const next = new Btn('versionNext');
-        e('>', [next, btnsBar]);
-        next.on('click', () => e('ASTNextVersion'));
 
-        // const run = new Btn('start');
-        // e('>', [run, btnsBar]);
-        // run.on('click', () => e('procStart'));
+        // const prev = new V({class: 'btn', txt: 'versionPrev'});
+        // e('>', [prev, btnsBar]);
+        // prev.on('click', () => e('ASTPrevVersion'));
         //
-        // const deploy = new Btn('deploy');
-        // e('>', [deploy, btnsBar]);
+        // const next = new Btn('versionNext');
+        // e('>', [next, btnsBar]);
+        // next.on('click', () => e('ASTNextVersion'));
 
-        let procsListIsActive = false;
-        const procsList = new ProcsList(this.popup, nodes);
-        const procsListBtn = new Btn('process list');
-        e('>', [procsListBtn, btnsBar]);
-        procsListBtn.on('click', async () => {
-            if (procsListIsActive) { e('popupClose'); return; }
-            e('popupOpen');
-        });
-
-        const logout = new Btn('logout');
-        e('>', [logout, btnsBar]);
-        //logout.on('click', () => e('ASTNextVersion'));
+        // let procsListIsActive = false;
+        // const procsList = new ProcsList(this.popup, nodes);
+        // const procsListBtn = new Btn('process list');
+        // e('>', [procsListBtn, btnsBar]);
+        // procsListBtn.on('click', async () => {
+        //     if (procsListIsActive) { e('popupClose'); return; }
+        //     e('popupOpen');
+        // });
 
         consolePanel.switchVisibility();
 

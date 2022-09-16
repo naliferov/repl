@@ -7,8 +7,7 @@ export default class ConsolePanel {
         this.v = new V({class: 'processLog'});
         this.header = new V({class: 'processLogHeader'});
         e('>', [this.header, this.v]);
-
-        e('>', [new V({txt: 'Logs'}), this.header]);
+        e('>', [new V({txt: 'Console'}), this.header]);
 
         this.automaticScroll = new V({tagName: 'input', style: {marginLeft: '1.5em'}});
         this.automaticScroll.setAttr('type', 'checkbox');
@@ -16,7 +15,7 @@ export default class ConsolePanel {
         e('>', [this.automaticScroll, this.header]);
         e('>', [new V({txt: 'automatic scroll'}), this.header]);
 
-        const inputJS = new V({tagName: 'input'});
+        const inputJS = new V({class: 'consoleInput', tagName: 'input'});
         e('>', [inputJS, this.v]);
         inputJS.on('keyup', (e) => {
             if (e.key !== 'Enter') return;

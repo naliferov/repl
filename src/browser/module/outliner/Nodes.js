@@ -16,7 +16,7 @@ export default class Nodes {
         const rootNode = new Node;
         rootNode.set('nodes', nodes);
 
-        const outlinerRootNode = new OutlinerNode(rootNode);
+        const outlinerRootNode = new OutlinerNode(rootNode, true);
         outlinerRootNode.removeSubNodesShift();
         outlinerRootNode.markAsRootNode();
 
@@ -27,20 +27,17 @@ export default class Nodes {
 
             const node = outlinerNode.getContextNode();
             const subNodes = node.get('nodes');
-            if (!Array.isArray(subNodes)) return;
             if (!node.get('open') && !isRootNode) outlinerNode.getNodesV().hide();
 
-            for (let i = 0; i < subNodes.length; i++) {
+            for (let i in subNodes) {
                 const newNode = new Node(subNodes[i]);
                 const newOutlinerNode = new OutlinerNode(newNode);
                 e('>', [newOutlinerNode.getV(), outlinerNode.getNodesV()]);
 
                 window.nodesPool.set(newNode.get('id'), newNode);
                 window.outlinerPool.set(newOutlinerNode.getDomId(), newOutlinerNode);
-                render(newOutlinerNode);
             }
         }
-
         render(outlinerRootNode, true);
     }
 
@@ -63,19 +60,18 @@ export default class Nodes {
             this.copy(outlinerNode);
         } else if (k === 'Tab') {
             e.preventDefault();
+            // if (e.shiftKey) {
+            //     const parent = outlinerNode.getParent();
+            //     window.e('>after', [outlinerNode.getV(), parent.getV()]);
+            // } else if (outlinerNode.prev()) {
+            //     window.e('>', [outlinerNode.getV(), outlinerNode.prev().getNodesV()]);
+            // }
 
-            if (e.shiftKey) {
-                const parent = outlinerNode.getParent();
-                window.e('>after', [outlinerNode.getV(), parent.getV()]);
-            } else if (outlinerNode.prev()) {
-                window.e('>', [outlinerNode.getV(), outlinerNode.prev().getNodesV()]);
-            }
-
-        } else if (ctrl && k === 'ArrowUp' && outlinerNode.prev()) {
+        } /*else if (ctrl && k === 'ArrowUp' && outlinerNode.prev()) {
             window.e('>after', [outlinerNode.prev().getV(), outlinerNode.getV()]);
         } else if (ctrl && k === 'ArrowDown' && outlinerNode.next()) {
             window.e('>after', [outlinerNode.getV(), outlinerNode.next().getV()]);
-        } else if (ctrl && k === 'v') {
+        } */else if (ctrl && k === 'v') {
             setTimeout(() => {
                 outlinerNode.updateNameInContextNode();
                 this.save();
@@ -120,9 +116,9 @@ export default class Nodes {
                 this.delete(outlinerNode);
             }
 
+        } else {
+            await new HttpClient().post(window.e('loopServiceUrl') + '/setKey', {nodeId: node.get('id'), k: 'name', v: node.get('name')});
         }
-
-        await this.save();
     }
 
     async handleDblClick(e) {
@@ -193,8 +189,6 @@ export default class Nodes {
             }
         }
 
-        console.log(rqParams);
-
         (new HttpClient).post(e('loopServiceUrl') + '/deleteNode', rqParams);
 
         window.nodesPool.delete(outlinerNode.getContextNode().get('id'));
@@ -227,9 +221,8 @@ export default class Nodes {
             return r;
         }
 
-        const nodes = getNodesData(this.outLinerRootNode);
+        //const nodes = getNodesData(this.outLinerRootNode);
         //console.log(nodes);
-
-        await new HttpClient().post('/nodes', {nodes})
+        //await new HttpClient().post('/nodes', {nodes})
     }
 }

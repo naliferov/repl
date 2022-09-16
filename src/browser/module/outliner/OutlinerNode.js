@@ -1,9 +1,10 @@
 import {uuid} from "../../../F.js";
 import V from "../../../type/V.js";
+import Btn from "../../../type/Btn.js";
 
 export default class OutlinerNode {
 
-    constructor(node) {
+    constructor(node, isRoot) {
         this.node = node;
 
         this.domId = uuid();
@@ -31,6 +32,14 @@ export default class OutlinerNode {
         this.dataV.setAttr('outliner_node_id', this.domId);
         this.dataV.toggleEdit();
         e('>', [this.dataV, container]);
+
+        if (!isRoot) {
+            const id = new V({txt: 'ID', style: {
+                'margin-left': '10px'
+            }});
+            id.on('click', () => console.log(node.get('id')));
+            e('>', [id, container]);
+        }
 
         this.nodesV = new V({class: ['subNodes', 'shift']});
         e('>', [this.nodesV, this.v]);

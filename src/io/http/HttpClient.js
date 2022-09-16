@@ -22,7 +22,7 @@ export default class HttpClient {
 
         return {
             statusCode: response.status,
-            data: await response.json(),
+            data: headers['Content-Type'] = 'application/json' ? await response.json() : await response.txt(),
             headers: response.headers
         }
     }

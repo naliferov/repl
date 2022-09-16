@@ -228,6 +228,7 @@ export default class HttpMsgHandler {
                 if (!this.fs.exists(nodesFile)) { rs.send({}); return; }
                 rs.send(await this.fs.readFile(nodesFile));
             },
+
             'POST:/nodes': async () => {
                 if (!req.body.nodes) { rs.send({err: 'nodes is empty.'}); return; }
                 await this.fs.writeFile(this.getNodesFileForUser(req.authUser), JSON.stringify(req.body.nodes));
