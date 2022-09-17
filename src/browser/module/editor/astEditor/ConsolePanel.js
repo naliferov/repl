@@ -4,7 +4,7 @@ import HttpClient from "../../../../io/http/HttpClient.js";
 export default class ConsolePanel {
 
     constructor(input, localState) {
-        this.v = new V({class: 'processLog'});
+        this.v = new V({class: 'console'});
         this.header = new V({class: 'processLogHeader'});
         e('>', [this.header, this.v]);
         e('>', [new V({txt: 'Console'}), this.header]);
@@ -84,6 +84,17 @@ export default class ConsolePanel {
         } else {
             this.v.show();
             //this.localState.setLogPanelFlag(true);
+        }
+    }
+
+    async listenConsoleEvents() {
+        this.content.clear();
+
+        const evtSource = new EventSource(window.e('loopServiceUrl') + '/consoleMonitor');
+        evtSource.onmessage = (event) => {
+            e('>', [new V({txt: event.data, tagName: 'pre'}), this.content]);
+
+            if (this.automaticScroll.isChecked()) this.content.scrollDown();
         }
     }
 

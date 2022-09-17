@@ -170,6 +170,8 @@ export const keyBy = (array, key) => {
     for (let i = 0; i < array.length; i++) o[ array[i][key] ] = array[i];
     return o;
 }
+export const isObject = (o) => typeof o === 'object' && !Array.isArray(o) && o !== null;
+export const isArray = (o) => Array.isArray(o);
 
 /*static getCookie(name) {
     var nameEQ = name + "=";
@@ -187,10 +189,6 @@ static eraseCookie(name) {
 
 /*static isExists(varForCheck: any): boolean {
     return typeof varForCheck !== 'undefined'
-}
-
-static isObject(obj: any): boolean {
-    return typeof obj === 'object' && !ObjectNode.isArray(obj) && obj !== null
 }
 
 static isObjectEmpty(obj: object) {

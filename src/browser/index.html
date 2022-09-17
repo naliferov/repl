@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>loop</title>
+    <title>repl</title>
     <link rel="icon" href="/img/favicon2.ico" type="image/x-icon">
     <style>
         @font-face {
@@ -243,7 +243,7 @@
         div.propName { color: var(--prop-name-color); }
         div.function { color: var(--function-color); }
 
-        .processLog {
+        .console {
             position: fixed;
             width: 100%;
             overflow: scroll;
@@ -251,6 +251,16 @@
             z-index: 5;
             background: #b9b9b9;
         }
+        .consoleInput { width: 100%; }
+        .console pre {
+            margin: 0;
+            white-space: -moz-pre-wrap; /* Mozilla, supported since 1999 */
+            white-space: -pre-wrap; /* Opera */
+            white-space: -o-pre-wrap; /* Opera */
+            white-space: pre-wrap; /* CSS3 - Text module (Candidate Recommendation) http://www.w3.org/TR/css3-text/#white-space */
+            word-wrap: break-word; /* IE 5.5+ */
+        }
+
         .processLogHeader {
             display: flex;
             align-items: center;
@@ -259,13 +269,9 @@
         }
         .processLogContent {
             padding: 0 10px;
-            background: #e1dfdf;
+            background: #f6f6f6;
             height: 180px;
             overflow: scroll;
-        }
-
-        .consoleInput {
-            width: 100%;
         }
 
         [contenteditable] {outline: 0; }
@@ -293,24 +299,20 @@
             outline: none;
             resize: none;
         }
-
         .jsEditor {
             font-family: 'JetBrains Mono', sans-serif;
             line-height: 1.55em;
             font-variant-ligatures : none;
             font-size: 14px;
             font-weight: 600;
-            width: 100%;
-            height: calc(100vh - 50px);
 
+            width: 100%;
+            height: calc(100vh - 54px);
             border: none;
             outline: none;
             resize: none;
         }
-
-        .jsEditor * {
-            font-variant-ligatures : none;
-        }
+        .jsEditor * { font-variant-ligatures : none; }
 
         .line {
             margin: 0; padding: 0;

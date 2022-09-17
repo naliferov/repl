@@ -8,13 +8,11 @@ import HttpClient from "../io/http/HttpClient.js";
 import ModuleImports from "./module/editor/astEditor/nodes/module/ModuleImports.js";
 import ModuleCallableCondition from "./module/editor/astEditor/nodes/module/ModuleCallableCondition.js";
 import ModuleBody from "./module/editor/astEditor/nodes/module/ModuleBody.js";
-import LogPanel from "./module/editor/astEditor/LogPanel.js";
 import Callable from "./module/editor/astEditor/nodes/conditionAndBody/call/callable/Callable.js";
 import Call from "./module/editor/astEditor/nodes/conditionAndBody/call/call/Call.js";
 import CallConditionPart from "./module/editor/astEditor/nodes/conditionAndBody/call/call/CallConditionPart.js";
 import AstEditor from "./module/editor/astEditor/control/AstEditor.js";
 import Btn from "../type/Btn.js";
-import ProcsList from "./module/procsList/ProcsList.js";
 import ConsolePanel from "./module/editor/astEditor/ConsolePanel.js";
 
 export default class IDE {
@@ -33,11 +31,9 @@ export default class IDE {
 
         this.createPopup(pageIDE);
 
-        const logPanel = new LogPanel(input, localState);
-        e('>', [logPanel.getV(), pageIDE]);
-
         const consolePanel = new ConsolePanel(input, localState);
         e('>', [consolePanel.getV(), pageIDE]);
+        consolePanel.listenConsoleEvents();
 
         const sideBar = new V({class: 'sidebar'});
         e('>', [sideBar, pageIDE]);
@@ -58,11 +54,24 @@ export default class IDE {
         const mainContainer = new V({class: 'mainContainer'});
         e('>', [mainContainer, pageIDE]);
 
-
         const btnsBar = new V({class: 'btnsBar'});
         e('>', [btnsBar, mainContainer]);
 
+        const run = new V({class: 'btn', txt: 'run'});
+        e('>', [run, btnsBar]);
+        run.on('click', () => {
+            //http.post('/console', {groupId: node.get('id'), js});
 
+            const activeTab = tabManager.getActiveTab();
+            if (!activeTab) return;
+            const js = `x('${activeTab.getContextNode().get('id')}')`;
+            http.post(window.e('loopServiceUrl') + '/console', {js});
+        });
+        const consoleBtn = new V({class: 'btn', txt: 'console'});
+        e('>', [consoleBtn, btnsBar]);
+        consoleBtn.on('click', () => {
+            consolePanel.switchVisibility();
+        });
 
         // const prev = new V({class: 'btn', txt: 'versionPrev'});
         // e('>', [prev, btnsBar]);
@@ -110,13 +119,13 @@ export default class IDE {
         e['popupOpen'] = async () => {
             await procsList.show();
             await this.showPopup();
-            procsListIsActive = true;
+            //procsListIsActive = true;
             e('disableGlobalInputHandlers');
         }
         e['popupClose'] = () => {
             this.popup.clear();
             this.hidePopup();
-            procsListIsActive = false;
+            //procsListIsActive = false;
             e('nodeEditorMod');
         }
 
@@ -132,12 +141,7 @@ export default class IDE {
             const js = new AstToJs().createJsCode(node, lastASTVersion);
 
             const {data} = await http.post('/proc/start', {groupId: node.get('id'), js});
-            console.log(data);
-            // setTimeout(async () => {
-            //     logPanel.show();
-            //     logPanel.enableAutomaticScroll();
-            //     logPanel.listenLogFromStart(data.uniqName);
-            // }, 1000);
+            //console.log(data);
         }
         e['procStop'] = async ({procsIds}) => (await http.post('/proc/stop', {procsIds})).data;
         e['markASTNode'] = async ([contextNode, ASTNode]) => {

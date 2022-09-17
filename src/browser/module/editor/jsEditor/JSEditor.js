@@ -11,13 +11,13 @@ export default class JSEditor {
     applyAceEditor() {
         const editor = ace.edit(this.getEditorId());
 
-        editor.getSession().on('change', async () => {
+        editor.getSession().on('change', () => {
             const node = this.node;
             const js = editor.getSession().getValue();
             if (node.get('js') === js) return;
 
             node.set('js', js);
-            await new HttpClient().post(e('loopServiceUrl') + '/setKey', {nodeId: node.get('id'), k: 'js', v: js});
+            new HttpClient().post(e('loopServiceUrl') + '/setKey', {nodeId: node.get('id'), k: 'js', v: js});
         });
         ace.config.set("basePath", "/ace");
 

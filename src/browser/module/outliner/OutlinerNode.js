@@ -37,7 +37,7 @@ export default class OutlinerNode {
             const id = new V({txt: 'ID', style: {
                 'margin-left': '10px'
             }});
-            id.on('click', () => console.log(node.get('id')));
+            id.on('click', () => navigator.clipboard.writeText(node.get('id')));
             e('>', [id, container]);
         }
 

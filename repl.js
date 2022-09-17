@@ -1,13 +1,3 @@
-const y = {
-    __std__: {
-        nodes: {},
-    },
-    __ext__: {
-        express: (await import("express")).default,
-        bodyParser: (await import("body-parser")).default,
-    }
-}
-
 const main = async () => {
     if (typeof window !== 'undefined') { await browser(); return; }
 
@@ -17,8 +7,8 @@ const main = async () => {
     const cliArgs = parseCliArgs(process.argv);
     const Logger = (await import("./src/log/Logger.js")).default;
     const logger = new Logger(fs);
+    process.on('unhandledRejection', e => logger.error(`unhandledRejection:`, e.stack));
 
-    process.on('unhandledRejection', e => logger.error('unhandledRejection', e));
 
     let x = new Proxy(() => {}, {
         get(target, prop, receiver) { return y.__std__.nodes.versionData[prop]; },
@@ -26,6 +16,8 @@ const main = async () => {
 
             const node = y.__std__.nodes.versionData[argArray[0]];
             try {
+                logger.info(`exec node [${node.name}]`);
+
                 if (!node.__js__) node.__js__ = eval(node.js);
                 return node.__js__();
             } catch (e) {
@@ -33,37 +25,66 @@ const main = async () => {
             }
         }
     });
-
+    const y = {
+        __std__: {
+            nodes: {},
+        },
+        __ext__: {
+            express: (await import("express")).default,
+            bodyParser: (await import("body-parser")).default,
+        }
+    }
     y.__std__.nodes = {
         versionData: {},
         version: 'nodes_v_1.json',
     }
     y.__std__.nodes = JSON.parse(await fs.readFile(y.__std__.nodes.version))
 
-    const {uuid, unixTs} = (await import("./src/F.js"));
+
 
     const nodes = y.__std__.nodes.versionData;
-    for (let i in nodes) {
-        let node = nodes[i]; if (!node.name) logger.error('node name is not defined', node);
-    }
+    for (let i in nodes) { let node = nodes[i]; if (!node.name) logger.error('node name is not defined', node); }
+
+    let connectedRS;
+    logger.onMessage((msg, object) => {
+        if (!connectedRS) return;
+        if (typeof msg === 'object' && msg !== null) {
+            connectedRS.write(`data:${JSON.stringify(msg)}\n\n`);
+        } else {
+            connectedRS.write(`data:${msg} ${object ? JSON.stringify(object) : ''}\n\n`);
+        }
+    });
 
     const log = async (rq, rs, nx) => { logger.info(rq.method + ' ' + rq.path); nx(); }
     const api = async (rq, rs, nx) => {
 
         rs.setHeader('Access-Control-Allow-Origin', '*');
-        rs.setHeader('Access-Control-Allow-Headers', "Content-Type, Authorization, X-Requested-With");
+        rs.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
         if (rq.path === '/getNodes') rs.send(y.__std__.nodes.versionData);
         else if (rq.path === '/console') {
 
             if (typeof rq.body.js !== 'string') { rs.send({err: 'js is not string'}); return; }
             try {
-                const r = eval(rq.body.js);
-                rs.send(r ? {r} : {});
+                eval(`( async() => { ${rq.body.js} } )()`);
+                rs.send({});
             } catch (e) {
                 logger.error(e.toString(), e.stack);
                 rs.send({err: e.toString(), stack: e.stack});
             }
+
+        } else if (rq.path === '/consoleMonitor') {
+
+            rs.writeHead(200, {
+                'Content-Type': 'text/event-stream', 'Connection': 'keep-alive', 'Cache-Control': 'no-cache'
+            });
+            rs.write(`data: connected to console...\n\n`);
+            connectedRS = rs;
+
+            rq.on('close', () => {
+                connectedRS = null;
+                logger.info('SSE closed')
+            });
 
         } else if (rq.path === '/createNode') {
 
@@ -112,9 +133,7 @@ const main = async () => {
     const p = cliArgs.port || 8099;
     s.listen(p, (err) => logger.info(`Server listening on port ${p}`));
 
-    /*s.close(() => {
-        s.listen(p);
-    });*/
+    //s.close(() => {  });
 }
 
 const browser = async () => {
