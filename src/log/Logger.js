@@ -17,13 +17,15 @@ export default class Logger {
 
     async log(msg, object) {
         const isMsgObject = typeof msg === 'object';
-        const logMsg = isMsgObject ? msg : this.prefix + msg;
+        let logMsg = '';
 
-        object ? console.log(logMsg, object) : console.log(logMsg);
-        if (this.file) {
-            //await this.fs.writeFile(this.file, (object ? `${logMsg} ${JSON.stringify(object)}` : logMsg) + EOL);
+        if (isMsgObject) {
+            logMsg = msg;
+        } else {
+            logMsg = this.prefix + (msg.toString ? msg.toString() : msg);
         }
 
+        object ? console.log(logMsg, object) : console.log(logMsg);
         if (this.handler) this.handler(logMsg, object);
     }
     async info(msg, object = null) { await this.log(msg, object); }

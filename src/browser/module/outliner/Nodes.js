@@ -148,18 +148,20 @@ export default class Nodes {
 
         const parent = outlinerNode.getParent();
 
-        const rqParams = {node: newNode.getData()};
-        if (!parent.isRoot) rqParams.parentNodeId = parent.getContextNode().get('id');
+        //const rqParams = {};
+        //if (!parent.isRoot) rqParams.parentNodeId = parent.getContextNode().get('id');
 
-        const subNodes = parent.getNodesV().getChildren();
+        /*const subNodes = parent.getNodesV().getChildren();
         for (let i = 0; i < subNodes.length; i++) {
             if (subNodes[i].id === newOutlinerNode.getDomId()) {
                 rqParams.nodeIndex = i;
                 break;
             }
-        }
+        }*/
 
-        (new HttpClient).post(e('loopServiceUrl') + '/createNode', rqParams);
+        console.log(newNode.getData());
+
+        (new HttpClient).post(e('loopServiceUrl') + '/createNode', {node: newNode.getData()});
 
         setTimeout(() => newOutlinerNode.focus(), 100);
     }

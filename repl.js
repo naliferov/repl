@@ -9,12 +9,13 @@ const main = async () => {
     const logger = new Logger(fs);
     process.on('unhandledRejection', e => logger.error(`unhandledRejection:`, e.stack));
 
-
-    let x = new Proxy(() => {}, {
+    const x = new Proxy(() => {}, {
         get(target, prop, receiver) { return y.__std__.nodes.versionData[prop]; },
         apply(target, thisArg, argArray) {
 
             const node = y.__std__.nodes.versionData[argArray[0]];
+            if (!node) { logger.error(`node not found by id [${argArray[0]}]`); return; }
+
             try {
                 logger.info(`exec node [${node.name}]`);
 
@@ -36,10 +37,22 @@ const main = async () => {
     }
     y.__std__.nodes = {
         versionData: {},
-        version: 'nodes_v_1.json',
+        version: 'nodes.json',
     }
     y.__std__.nodes = JSON.parse(await fs.readFile(y.__std__.nodes.version))
 
+    let saving;
+    const triggerDump = () => {
+
+        if (saving) return;
+        saving = setTimeout(async () => {
+            await logger.info('dumpNodesToDisc...');
+            await fs.writeFile(y.__std__.nodes.version, JSON.stringify(y.__std__.nodes));
+
+            clearTimeout(saving);
+            saving = null;
+        }, 1000);
+    }
 
 
     const nodes = y.__std__.nodes.versionData;
@@ -48,11 +61,7 @@ const main = async () => {
     let connectedRS;
     logger.onMessage((msg, object) => {
         if (!connectedRS) return;
-        if (typeof msg === 'object' && msg !== null) {
-            connectedRS.write(`data:${JSON.stringify(msg)}\n\n`);
-        } else {
-            connectedRS.write(`data:${msg} ${object ? JSON.stringify(object) : ''}\n\n`);
-        }
+        connectedRS.write(`data:${ JSON.stringify({m: msg, o: object }) } \n\n`);
     });
 
     const log = async (rq, rs, nx) => { logger.info(rq.method + ' ' + rq.path); nx(); }
@@ -90,9 +99,8 @@ const main = async () => {
 
             const node = rq.body.node;
             if (!node) { rs.send({err: 'node is empty'}); return; }
-            y.__std__.nodes.versionData[node.id] = node;
+            triggerDump();
             rs.send({});
-            await fs.writeFile(y.__std__.nodes.version, JSON.stringify(y.__std__.nodes));
 
         } else if (rq.path === '/deleteNode') {
 
@@ -100,7 +108,7 @@ const main = async () => {
             if (!nodeId) { rs.send({err: 'nodeId is empty'}); return; }
             delete y.__std__.nodes.versionData[nodeId];
             rs.send({});
-            await fs.writeFile(y.__std__.nodes.version, JSON.stringify(y.__std__.nodes));
+            triggerDump();
 
         } else if (rq.path === '/setKey') {
 
@@ -118,12 +126,15 @@ const main = async () => {
             node[k] = v;
 
             if (k === 'js') {
-                try { node.__js__ = eval(v); }
+                try {
+                    const js = eval(v);
+                    if (js) node.__js__ = js;
+                }
                 catch (e) { logger.error(e.toString(), e.stack); }
             }
 
             rs.send(node);
-            await fs.writeFile(y.__std__.nodes.version, JSON.stringify(y.__std__.nodes));
+            triggerDump();
         }
         nx();
     }

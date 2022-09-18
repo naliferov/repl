@@ -11,6 +11,7 @@ export default class ConsolePanel {
 
         this.automaticScroll = new V({tagName: 'input', style: {marginLeft: '1.5em'}});
         this.automaticScroll.setAttr('type', 'checkbox');
+        this.automaticScroll.setAttr('checked', 'true');
 
         e('>', [this.automaticScroll, this.header]);
         e('>', [new V({txt: 'automatic scroll'}), this.header]);
