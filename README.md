@@ -1,3 +1,3 @@
-# JSP
+# repl-js
 
-Javascript platform.
+Repl Javascript platform.

@@ -199,6 +199,7 @@ export default class IDE {
         e('nodeEditorMod');
 
 
+
         const activeTabId = localState.getActiveTabId();
         const openedFx = localState.getOpenedTabs();
 

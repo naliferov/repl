@@ -5,8 +5,8 @@ const main = async () => {
     const {parseCliArgs} = await import("./src/F.js");
     const fs = new (await import("./src/io/fs/FS.js")).default;
     const cliArgs = parseCliArgs(process.argv);
-    const Logger = (await import("./src/log/Logger.js")).default;
-    const logger = new Logger(fs);
+    const logger = new (await import("./src/log/Logger.js")).default(fs);
+    const log = logger;
     process.on('unhandledRejection', e => logger.error(`unhandledRejection:`, e.stack));
 
     const x = new Proxy(() => {}, {
@@ -15,7 +15,6 @@ const main = async () => {
 
             const node = y.__std__.nodes.versionData[argArray[0]];
             if (!node) { logger.error(`node not found by id [${argArray[0]}]`); return; }
-
             try {
                 logger.info(`exec node [${node.name}]`);
 
@@ -39,7 +38,7 @@ const main = async () => {
         versionData: {},
         version: 'nodes.json',
     }
-    y.__std__.nodes = JSON.parse(await fs.readFile(y.__std__.nodes.version))
+    y.__std__.nodes = JSON.parse(await fs.readFile(y.__std__.nodes.version));
 
     let saving;
     const triggerDump = () => {
@@ -58,13 +57,16 @@ const main = async () => {
     const nodes = y.__std__.nodes.versionData;
     for (let i in nodes) { let node = nodes[i]; if (!node.name) logger.error('node name is not defined', node); }
 
+
     let connectedRS;
     logger.onMessage((msg, object) => {
         if (!connectedRS) return;
-        connectedRS.write(`data:${ JSON.stringify({m: msg, o: object }) } \n\n`);
+        const data = [msg];
+        if (object) data.push(object);
+        connectedRS.write(`data:${JSON.stringify(data)}\n\n`);
     });
 
-    const log = async (rq, rs, nx) => { logger.info(rq.method + ' ' + rq.path); nx(); }
+    const requestLogger = async (rq, rs, nx) => { logger.info(rq.method + ' ' + rq.path); nx(); }
     const api = async (rq, rs, nx) => {
 
         rs.setHeader('Access-Control-Allow-Origin', '*');
@@ -84,10 +86,8 @@ const main = async () => {
 
         } else if (rq.path === '/consoleMonitor') {
 
-            rs.writeHead(200, {
-                'Content-Type': 'text/event-stream', 'Connection': 'keep-alive', 'Cache-Control': 'no-cache'
-            });
-            rs.write(`data: connected to console...\n\n`);
+            rs.writeHead(200, {'Content-Type': 'text/event-stream', 'Connection': 'keep-alive', 'Cache-Control': 'no-cache'});
+            rs.write(`data: {"m": "Console connected..."}\n\n`);
             connectedRS = rs;
 
             rq.on('close', () => {
@@ -139,7 +139,7 @@ const main = async () => {
         nx();
     }
     const e = y.__ext__.express();
-    e.use(y.__ext__.bodyParser.json({limit: '25mb'}), log, api);
+    e.use(y.__ext__.bodyParser.json({limit: '25mb'}), requestLogger, api);
     const s = (await import("node:http")).createServer({}, e);
     const p = cliArgs.port || 8099;
     s.listen(p, (err) => logger.info(`Server listening on port ${p}`));
