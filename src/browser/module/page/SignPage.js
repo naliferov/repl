@@ -61,7 +61,8 @@ export default class SignPage {
         btn.on('click', async (e) => submit());
 
         if (isSignIn) {
-            e('>', [new V({tagName: 'span', txt: "Don't have an account? "}), sign]);
+            const style = {marginLeft: '5px'};
+            e('>', [new V({tagName: 'span', txt: "Don't have an account?", style}), sign]);
             e('>', [new V({tagName: 'a', txt: "Sign up"}).setAttr('href', '/sign/up'), sign]);
         }
     }

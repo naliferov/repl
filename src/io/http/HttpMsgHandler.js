@@ -1,6 +1,5 @@
 import * as crypto from 'node:crypto';
 import UsersModel from "../db/model/UsersModel.js";
-import ProcsModel from "../db/model/ProcsModel.js";
 import {Tail} from "tail";
 import bcrypt from "bcrypt";
 import HttpClient from "./HttpClient.js";
@@ -8,18 +7,20 @@ import NetworkNodesModel from "../db/model/NetworkNodesModel.js";
 import ServicesModel from "../db/model/ServicesModel.js";
 import {ObjectId} from "mongodb";
 import {keyBy} from "../../F.js";
+import {getHtmlTemplate} from "../../browser/html.js";
+import ReplsModel from "../db/model/ReplsModel.js";
+import DigitalOcean from "../api/DigitalOcean.js";
 
-const COOKIE_KEY = 'rockabilly';
+const COOKIE_KEY = 'token';
 
 export default class HttpMsgHandler {
 
     constructor(logger, appDir, mongoManager, x) {
         this.fs = x('fs');
         this.logger = logger;
-        this.appDir = appDir;
         this.usersModel = new UsersModel(mongoManager);
         this.servicesModel = new ServicesModel(mongoManager);
-        this.procsModel = new ProcsModel(mongoManager);
+        this.replsModel = new ReplsModel(mongoManager);
         this.networksNodesModel = new NetworkNodesModel(mongoManager);
         this.x = x;
         //todo create runner service client here
@@ -33,6 +34,8 @@ export default class HttpMsgHandler {
     authorize(res, authKey) {
         res.cookie(COOKIE_KEY, authKey, { maxAge: (60 * 60 * 24) * (30 * 1000), httpOnly: true, secure: true, sameSite: 'Strict'});
     }
+    unauthorize(res) {res.clearCookie(COOKIE_KEY); }
+
     getAuthKey(req) { return req.cookies[COOKIE_KEY]; }
     getNodesFileForUser(user) { return this.x('stateDir') + '/' + user._id.toString() + '.json'; }
 
@@ -45,11 +48,11 @@ export default class HttpMsgHandler {
     }
 
     async run(req, rs, nx, methodPath) {
-        const htmlFile = await this.fs.readFile(this.appDir + '/src/browser/index.html');
-        const html = () => rs.send(htmlFile);
+        const html = (gpatcha) => rs.send(getHtmlTemplate(gpatcha));
         const m = {
-            'GET:/': async() => rs.send(htmlFile),
-            'GET:/sign/in': html, 'GET:/sign/up': html,
+            'GET:/': () => html(),
+            'GET:/sign/in': () => html(true),
+            'GET:/sign/up': () => html(true),
             'POST:/sign/in': async () => {
                 let {email, password, recaptchaToken} = req.body;
                 email = email.trim(); password = password.trim();
@@ -99,6 +102,7 @@ export default class HttpMsgHandler {
                 }
                 this.authorize(rs, authKey); rs.send({});
             },
+            'POST:/sign/out': () => { this.unauthorize(rs); rs.send({}); },
             'GET:/service': async () => {
                 const groupsIds = req.query.groupsIds ? req.query.groupsIds.trim() : '';
                 if (!groupsIds) { rs.send({err: 'groupsIds is empty.'}); return; }
@@ -116,16 +120,17 @@ export default class HttpMsgHandler {
                 rs.send({r: await this.servicesModel.updateOne({groupId}, {$set: {name}})});
             },
             'DELETE:/service': async () => rs.send({r: await this.servicesModel.deleteOneBy('groupId', req.body.groupId)}),
-            'POST:/proc/start': async () => {
-                const {groupId, js} = req.body;
-                if (!groupId || !js) { rs.send({err: 'name or js is empty.'}); return; }
-                if (groupId.length > 40) {rs.send({err: 'groupId is too long'}); return;}
+            'POST:/repl/create': async () => {
+                //const {js} = req.body;
+                //if (!groupId || !js) { rs.send({err: 'name or js is empty.'}); return; }
+                //if (groupId.length > 40) {rs.send({err: 'groupId is too long'}); return;}
 
                 try {
-                    const networkNode = await (await this.networksNodesModel.getRandomDoc()).next();
-                    if (!networkNode) { rs.send({err: 'networkNode not found.'}); return; }
+                    const digitalO = DigitalOcean();
+                    //const networkNode = await (await this.replsModel.getRandomDoc()).next();
+                    //if (!networkNode) { rs.send({err: 'networkNode not found.'}); return; }
 
-                    const host = networkNode.ip + (networkNode.port ? ':' + networkNode.port : '');
+                    //const host = networkNode.ip + (networkNode.port ? ':' + networkNode.port : '');
                     const {data} = await (new HttpClient()).post(`http://${host}/start`, {js}, {}, {timeout: 8000});
                     if (data.err || data.stderr) { rs.send({'errorFromService': data}); return; }
 
@@ -140,7 +145,7 @@ export default class HttpMsgHandler {
                     rs.send({err});
                 }
             },
-            'POST:/proc/stop': async () => {
+            'POST:/repl/delete': async () => {
                 const procsIds = Array.isArray(req.body.procsIds) ? req.body.procsIds.map(id => new ObjectId(id)) : [];
                 const procsByNetworkNodeId = new Map;
 
@@ -206,29 +211,28 @@ export default class HttpMsgHandler {
                     rs.write(`data: ${e.toString()}\n\n`);
                 }
             },
-            'GET:/proc/list': async () => {
+            'GET:/repl/list': async () => {
                 //todo add index user_id
                 //todo add uniq index in mongo for field containerId
                 //todo add date field for cleaning purpose
 
-                let procs = await this.procsModel.find({userId: req.authUser._id});
-                let procsByContainerId = keyBy(procs, 'containerId');
+                let repls = await this.replsModel.find({userId: req.authUser._id});
+                //let procsByContainerId = keyBy(repls, 'containerId');
 
-                const {data} = await (new HttpClient()).post(this.x('conf').runnerServiceUrl + '/searchContainers', {procsByContainerId});
-                if (data.err || data.stderr) { rs.send({data}); return; }
+                //const {data} = await (new HttpClient()).post(this.x('conf').runnerServiceUrl + '/searchContainers', {procsByContainerId});
+                //if (data.err || data.stderr) { rs.send({data}); return; }
 
-                for (let i = 0; i < data.length; i++) delete procsByContainerId[ data[i].containerId ];
+                //for (let i = 0; i < data.length; i++) delete procsByContainerId[ data[i].containerId ];
 
-                await this.procsModel.deleteManyBy('containerId', Object.keys(procsByContainerId));
+                //await this.procsModel.deleteManyBy('containerId', Object.keys(procsByContainerId));
 
-                rs.send(data);
+                rs.send([]);
             },
             'GET:/nodes': async () => {
                 const nodesFile = this.getNodesFileForUser(req.authUser);
                 if (!this.fs.exists(nodesFile)) { rs.send({}); return; }
                 rs.send(await this.fs.readFile(nodesFile));
             },
-
             'POST:/nodes': async () => {
                 if (!req.body.nodes) { rs.send({err: 'nodes is empty.'}); return; }
                 await this.fs.writeFile(this.getNodesFileForUser(req.authUser), JSON.stringify(req.body.nodes));
@@ -246,10 +250,10 @@ export default class HttpMsgHandler {
             'GET:/service': 1,
             'POST:/service': 1,
             'DELETE:/service': 1,
-            'POST:/proc/start': 1,
-            'POST:/proc/stop': 1,
-            'GET:/proc/log': 1,
-            'GET:/proc/list': 1,
+            'POST:/repl/create': 1,
+            'POST:/repl/delete': 1,
+            'GET:/repl/log': 1,
+            'GET:/repl/list': 1,
             'GET:/nodes': 1,
             'POST:/nodes': 1,
         }

@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+export const getHtmlTemplate = (gcaptcha = false) => {
+    return (
+
+`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -352,6 +355,7 @@
 
         .grid { display: grid; }
         .flex { display: flex; }
+        .inlineBlock { display: inline-block; }
         .gap { gap: 10px; }
         .alignCenter { align-items: center; }
 
@@ -391,8 +395,10 @@
 <body>
 
 <div id="app"></div>
-<!--<script src="https://www.google.com/recaptcha/api.js?render=6Ldhj6AfAAAAAMjreOkJLkqN3zgejHQ2AQFA3m_e"></script>-->
+${gcaptcha ? '<script src="https://www.google.com/recaptcha/api.js?render=6Ldhj6AfAAAAAMjreOkJLkqN3zgejHQ2AQFA3m_e"></script>' : ''}
 <script src="/ace/ace.js"></script>
 <script type="module" src="/x.js"></script>
 </body>
 </html>
+`);
+}

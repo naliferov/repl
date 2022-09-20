@@ -14,6 +14,7 @@ import CallConditionPart from "./module/editor/astEditor/nodes/conditionAndBody/
 import AstEditor from "./module/editor/astEditor/control/AstEditor.js";
 import Btn from "../type/Btn.js";
 import ConsolePanel from "./module/editor/astEditor/ConsolePanel.js";
+import Replist from "./module/replist/Replist.js";
 
 export default class IDE {
 
@@ -23,7 +24,7 @@ export default class IDE {
         const input = new Input(window);
         const http = new HttpClient;
 
-        //later move this to loop some king of loop manager
+        //later move this to some king of loop manager
         e['loopServiceUrl'] = () => 'http://localhost:8099';
 
         const pageIDE = new V({class: ['pageIDE']});
@@ -40,15 +41,35 @@ export default class IDE {
 
         const sideBarBtnsBar = new V({class: 'btnsBar'});
         e('>', [sideBarBtnsBar, sideBar]);
-        const addNodeBtn = new V({class: ['btn'], txt: '+'});
-        e('>', [addNodeBtn, sideBarBtnsBar]);
+        // const addNodeBtn = new V({class: ['btn'], txt: '+'});
+        // e('>', [addNodeBtn, sideBarBtnsBar]);
 
         const logout = new Btn('logout');
         e('>', [logout, sideBarBtnsBar]);
-        //logout.on('click', () => e('ASTNextVersion'));
+        logout.on('click', async () => {
+            await http.post('/sign/out');
+            document.location.reload();
+        });
+
+        let repListIsActive = false;
+        let repList = new Replist(this.popup);
+        const repListBtn = new Btn('REPList');
+        e('>', [repListBtn, sideBarBtnsBar]);
+        repListBtn.on('click', async () => {
+            if (repListIsActive) {
+                e('popupClose');
+                repListIsActive = false;
+                return;
+            }
+            await repList.show();
+            await this.showPopup();
+            repListIsActive = true;
+            e('disableGlobalInputHandlers');
+        });
+
 
         const nodes = new Nodes;
-        await nodes.init();
+        //await nodes.init();
         e('>', [nodes.getV(), sideBar]);
 
         const mainContainer = new V({class: 'mainContainer'});
@@ -125,7 +146,6 @@ export default class IDE {
         e['popupClose'] = () => {
             this.popup.clear();
             this.hidePopup();
-            //procsListIsActive = false;
             e('nodeEditorMod');
         }
 
@@ -236,6 +256,7 @@ export default class IDE {
         //todo console for trigger loop events and functions
     }
 
+    //todo move popup to separate module
     async showPopup() {
         const closeBtn =  new V({class: ['btn'], style: {position: 'absolute', top: 0, right: 0}, txt: 'X'});
         closeBtn.on('click', () => this.popup.hide());
@@ -259,7 +280,6 @@ export default class IDE {
         return this.popup;
     }
     hidePopup() { this.popup.hide(); }
-
     createPopup(page) {
         this.popup = new V({class: ['popup', 'hidden'], style: {padding: '2em'}});
         e('>', [this.popup, page]);

@@ -23,6 +23,10 @@ const main = async () => {
     }
 
     if (cliArgs.cmd === 'runner') { await runRunnerService(cliArgs, {appDir: cwd, ctxDir: cwd, logger, x}); return; }
+    if (cliArgs.cmd === 'createRepl') {
+        
+        //await runRunnerService(cliArgs, {appDir: cwd, ctxDir: cwd, logger, x}); return;
+    }
     await runMainService(cliArgs, {appDir: cwd, ctxDir: cwd, logger, mongoManager, x});
 }
 
@@ -49,7 +53,6 @@ const runMainService = async (cliArgs, deps) => {
             if (subdomain.length > 1 && subdomain.length < 25) { //check for spaces and special chars
                 //const servicesModel = (new ServicesModel(mongoManager)).findOne({name: subdomain});
             }
-
             //try to find proxy service
         }
 

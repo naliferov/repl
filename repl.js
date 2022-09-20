@@ -1,14 +1,6 @@
 const main = async () => {
     if (typeof window !== 'undefined') { await browser(); return; }
 
-    const process = (await import("node:process")).default;
-    const {parseCliArgs} = await import("./src/F.js");
-    const fs = new (await import("./src/io/fs/FS.js")).default;
-    const cliArgs = parseCliArgs(process.argv);
-    const logger = new (await import("./src/log/Logger.js")).default(fs);
-    const log = logger;
-    process.on('unhandledRejection', e => logger.error(`unhandledRejection:`, e.stack));
-
     const x = new Proxy(() => {}, {
         get(target, prop, receiver) { return y.__std__.nodes.versionData[prop]; },
         apply(target, thisArg, argArray) {
@@ -30,14 +22,23 @@ const main = async () => {
             nodes: {},
         },
         __ext__: {
-            express: (await import("express")).default,
             bodyParser: (await import("body-parser")).default,
+            express: (await import("express")).default,
+            process: (await import("node:process")).default,
         }
     }
     y.__std__.nodes = {
         versionData: {},
         version: 'nodes.json',
     }
+
+    const {parseCliArgs} = await import("./src/F.js");
+    const fs = new (await import("./src/io/fs/FS.js")).default;
+    const cliArgs = parseCliArgs(y.__ext__.process.argv);
+    const logger = new (await import("./src/log/Logger.js")).default(fs);
+    const log = logger;
+
+    y.__ext__.process.on('unhandledRejection', e => logger.error(`unhandledRejection:`, e.stack));
     y.__std__.nodes = JSON.parse(await fs.readFile(y.__std__.nodes.version));
 
     let saving;
@@ -53,12 +54,13 @@ const main = async () => {
         }, 1000);
     }
 
+    //todo switch version mechanism
 
     const nodes = y.__std__.nodes.versionData;
     for (let i in nodes) { let node = nodes[i]; if (!node.name) logger.error('node name is not defined', node); }
 
 
-    let connectedRS;
+    let connectedRS; //todo make it as Map or object
     logger.onMessage((msg, object) => {
         if (!connectedRS) return;
         const data = [msg];
@@ -68,6 +70,8 @@ const main = async () => {
 
     const requestLogger = async (rq, rs, nx) => { logger.info(rq.method + ' ' + rq.path); nx(); }
     const api = async (rq, rs, nx) => {
+
+        //if client handler
 
         rs.setHeader('Access-Control-Allow-Origin', '*');
         rs.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
@@ -99,6 +103,7 @@ const main = async () => {
 
             const node = rq.body.node;
             if (!node) { rs.send({err: 'node is empty'}); return; }
+            y.__std__.nodes.versionData[node.id] = node;
             triggerDump();
             rs.send({});
 
