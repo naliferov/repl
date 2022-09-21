@@ -7,7 +7,10 @@ export default class BaseModel {
     collection() { return this.mongoManager.getDb().collection(this.name); }
     async insertOne(doc) { return await this.collection().insertOne(doc); }
     async updateOne(query, update) { return await this.collection().updateOne(query, update); }
-    async find(query) { return await (await this.collection().find(query)).toArray(); }
+    async find(query) {
+        const cursor = await this.collection().find(query);
+        return await cursor.toArray();
+    }
     async findByIds(ids) {
         const c = await this.collection().find({_id: {'$in': ids}});
         return await c.toArray();

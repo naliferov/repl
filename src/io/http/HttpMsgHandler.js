@@ -1,12 +1,10 @@
 import * as crypto from 'node:crypto';
 import UsersModel from "../db/model/UsersModel.js";
-import {Tail} from "tail";
 import bcrypt from "bcrypt";
 import HttpClient from "./HttpClient.js";
 import NetworkNodesModel from "../db/model/NetworkNodesModel.js";
 import ServicesModel from "../db/model/ServicesModel.js";
 import {ObjectId} from "mongodb";
-import {keyBy} from "../../F.js";
 import {getHtmlTemplate} from "../../browser/html.js";
 import ReplsModel from "../db/model/ReplsModel.js";
 import DigitalOcean from "../api/DigitalOcean.js";
@@ -121,25 +119,19 @@ export default class HttpMsgHandler {
             },
             'DELETE:/service': async () => rs.send({r: await this.servicesModel.deleteOneBy('groupId', req.body.groupId)}),
             'POST:/repl/create': async () => {
-                //const {js} = req.body;
-                //if (!groupId || !js) { rs.send({err: 'name or js is empty.'}); return; }
-                //if (groupId.length > 40) {rs.send({err: 'groupId is too long'}); return;}
-
                 try {
-                    const digitalO = DigitalOcean();
-                    //const networkNode = await (await this.replsModel.getRandomDoc()).next();
-                    //if (!networkNode) { rs.send({err: 'networkNode not found.'}); return; }
-
-                    //const host = networkNode.ip + (networkNode.port ? ':' + networkNode.port : '');
-                    const {data} = await (new HttpClient()).post(`http://${host}/start`, {js}, {}, {timeout: 8000});
-                    if (data.err || data.stderr) { rs.send({'errorFromService': data}); return; }
-
-                    const proc = {userId: req.authUser._id, groupId, networkNodeId: networkNode._id, port: data.port,
-                                  containerId: data.containerId};
-                    await this.procsModel.insertOne(proc);
-                    rs.send({data});
+                    const digitalOcean = new DigitalOcean(this.x('conf').do_token);
+                    let r = await digitalOcean.createDroplet();
+                    let repl = {
+                        dropletId: r.droplet.id,
+                        userId: req.authUser._id,
+                        status: r.droplet.status
+                    };
+                    const insertResult = await this.replsModel.insertOne(repl);
+                    repl.id = insertResult.insertedId;
+                    rs.send(repl);
                 } catch (e) {
-                    this.logger.error('scriptProcess run', e);
+                    this.logger.error('repl run', e);
                     let err = e.toString();
                     if (e.cause) err += JSON.stringify(e.cause);
                     rs.send({err});
@@ -183,33 +175,33 @@ export default class HttpMsgHandler {
 
                 rs.send({deletedProcsIds});
             },
-            'GET:/proc/log': async () => {
-                const name = req.query.name;
-                if (!name) { rs.send({err: 'name is empty.'}); return; }
-                if (name.includes('..') || name.includes('/') || name.includes("\\")) { rs.send({err: 'name is invalid.'}); return; }
-
-                rs.writeHead(200, {
-                    'Content-Type': 'text/event-stream',
-                    'Connection': 'keep-alive',
-                    'Cache-Control': 'no-cache'
-                });
-
-                try {
-                    const tail = new Tail(processManager.getLogFilename(name), {fromBeginning: true});
-                    tail.on('line', (line) => rs.write(`data: ${line}\n\n`));
-                    tail.on('error', (error) => {
-                        this.logger.info('ERROR: ', error)
-                        tail.unwatch();
-                        rs.write(`data: Log tail error + ${e.toString()}\n\n`);
-                    });
-                    req.on('close', () => {
-                        tail.unwatch();
-                        this.logger.info('close SSE');
-                    });
-                } catch (e) {
-                    this.logger.info('catch', e);
-                    rs.write(`data: ${e.toString()}\n\n`);
-                }
+            'GET:/repl/log': async () => {
+                // const name = req.query.name;
+                // if (!name) { rs.send({err: 'name is empty.'}); return; }
+                // if (name.includes('..') || name.includes('/') || name.includes("\\")) { rs.send({err: 'name is invalid.'}); return; }
+                //
+                // rs.writeHead(200, {
+                //     'Content-Type': 'text/event-stream',
+                //     'Connection': 'keep-alive',
+                //     'Cache-Control': 'no-cache'
+                // });
+                //
+                // try {
+                //     const tail = new Tail(processManager.getLogFilename(name), {fromBeginning: true});
+                //     tail.on('line', (line) => rs.write(`data: ${line}\n\n`));
+                //     tail.on('error', (error) => {
+                //         this.logger.info('ERROR: ', error)
+                //         tail.unwatch();
+                //         rs.write(`data: Log tail error + ${e.toString()}\n\n`);
+                //     });
+                //     req.on('close', () => {
+                //         tail.unwatch();
+                //         this.logger.info('close SSE');
+                //     });
+                // } catch (e) {
+                //     this.logger.info('catch', e);
+                //     rs.write(`data: ${e.toString()}\n\n`);
+                // }
             },
             'GET:/repl/list': async () => {
                 //todo add index user_id
@@ -217,16 +209,13 @@ export default class HttpMsgHandler {
                 //todo add date field for cleaning purpose
 
                 let repls = await this.replsModel.find({userId: req.authUser._id});
-                //let procsByContainerId = keyBy(repls, 'containerId');
 
-                //const {data} = await (new HttpClient()).post(this.x('conf').runnerServiceUrl + '/searchContainers', {procsByContainerId});
+                //digital ocean search droplets
                 //if (data.err || data.stderr) { rs.send({data}); return; }
-
-                //for (let i = 0; i < data.length; i++) delete procsByContainerId[ data[i].containerId ];
 
                 //await this.procsModel.deleteManyBy('containerId', Object.keys(procsByContainerId));
 
-                rs.send([]);
+                rs.send({repls});
             },
             'GET:/nodes': async () => {
                 const nodesFile = this.getNodesFileForUser(req.authUser);

@@ -34,7 +34,7 @@ export default class IDE {
 
         const consolePanel = new ConsolePanel(input, localState);
         e('>', [consolePanel.getV(), pageIDE]);
-        consolePanel.listenConsoleEvents();
+        //consolePanel.listenConsoleEvents();
 
         const sideBar = new V({class: 'sidebar'});
         e('>', [sideBar, pageIDE]);
@@ -43,13 +43,6 @@ export default class IDE {
         e('>', [sideBarBtnsBar, sideBar]);
         // const addNodeBtn = new V({class: ['btn'], txt: '+'});
         // e('>', [addNodeBtn, sideBarBtnsBar]);
-
-        const logout = new Btn('logout');
-        e('>', [logout, sideBarBtnsBar]);
-        logout.on('click', async () => {
-            await http.post('/sign/out');
-            document.location.reload();
-        });
 
         let repListIsActive = false;
         let repList = new Replist(this.popup);
@@ -65,6 +58,13 @@ export default class IDE {
             await this.showPopup();
             repListIsActive = true;
             e('disableGlobalInputHandlers');
+        });
+
+        const logout = new Btn('logout');
+        e('>', [logout, sideBarBtnsBar]);
+        logout.on('click', async () => {
+            await http.post('/sign/out');
+            document.location.reload();
         });
 
 

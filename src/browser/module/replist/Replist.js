@@ -15,12 +15,11 @@ export default class Replist {
 
         //let procsByGroupId = {}; //groupId is the same as nodeId
 
-        const addBtn = new V({class: ['btn', 'inlineBlock'], txt: '+'});
+        const addBtn = new V({class: ['btn', 'inlineBlock'], txt: 'add repl'});
         e('>', [addBtn, this.v]);
         addBtn.on('click', async (e) => {
 
             let repls = (await http.post('/repl/create')).data;
-
 
             //create server on digital ocean for 4$
             //create autostarting repl on it

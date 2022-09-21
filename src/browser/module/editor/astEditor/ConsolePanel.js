@@ -88,7 +88,7 @@ export default class ConsolePanel {
         }
     }
 
-    async listenConsoleEvents() {
+    listenConsoleEvents() {
         this.content.clear();
 
         const evtSource = new EventSource(window.e('loopServiceUrl') + '/consoleMonitor');

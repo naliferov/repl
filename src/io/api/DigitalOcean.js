@@ -19,7 +19,7 @@ export default class DigitalOcean {
     async sshKeys() { return await this.rq('account/keys') }
     async createDroplet() {
         return this.rq('droplets', {
-            name: 'rocknroll-pub1',
+            name: 'repl-js1',
             region: 'fra1',
             size: 's-1vcpu-512mb-10gb',
             image: 'ubuntu-22-04-x64',

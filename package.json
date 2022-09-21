@@ -1,18 +1,15 @@
 {
   "type": "module",
-  "name": "rocknrolla",
-  "description": "rocknrolla. IDE for javascript",
+  "name": "repl-js",
+  "description": "platform for javascript coding",
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.5",
     "express": "*",
-    "lodash": "^4.17.21",
     "monaco-editor": "^0.34.0",
     "mongodb": "^4.5.0",
-    "node-ssh": "^13.0.0",
-    "ps-list": "^8.1.0",
-    "tail": "^2.2.4"
+    "ps-list": "^8.1.0"
   }
 }
